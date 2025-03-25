@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WinGo BDG Predictor</title>
+    <title>𝖡𝖫𝖠𝖢𝖪𝖸 𝖷 𝖯𝖱𝖮</title>
     <style>
         body {
             margin: 0;
@@ -14,111 +14,135 @@
             height: 100vh;
             font-family: Arial, sans-serif;
             flex-direction: column;
-            background: url('your-image-path.jpg') no-repeat center center;
-            background-size: cover;
+            background: black;
+            color: white;
+            overflow: hidden;
         }
 
         .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
             width: 90%;
             max-width: 600px;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.7); /* Black transparent background */
-            border-radius: 10px;
-            border: 2px solid red;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
         }
 
         .title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
-            color: lime;
-            text-transform: uppercase;
-            margin-bottom: 10px;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         .box {
-            width: 100%;
             padding: 15px;
-            margin: 5px 0;
-            background: rgba(255, 0, 0, 0.1);
-            border: 2px solid red;
-            border-radius: 5px;
+            margin: 10px 0;
+            border-radius: 8px;
             text-align: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            color: white;
         }
 
-        .history {
-            width: 100%;
+        .period-box {
+            background: rgba(0, 128, 0, 0.5);
+        }
+
+        .result-box {
+            background: rgba(255, 0, 0, 0.5);
+        }
+
+        .history-box {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 128, 0.5);
+            border-radius: 8px;
             max-height: 150px;
             overflow-y: auto;
-            font-size: 16px;
         }
     </style>
 </head>
+
 <body>
+
     <div class="container">
-        <div class="title">𝐗𝟏 𝐏𝐑𝐎</div>
-        <div class="box" id="period">Loading Period...</div>
-        <div class="box" id="timer">00 : 00</div>
-        <div class="box" id="result">PREDICTING...</div>
-        <div class="box" id="opposite-result">CALCALATING...</div>
-        <div class="box history" id="history">HISTORY:<br></div>
+        <div class="title">𝖡𝖫𝖠𝖢𝖪𝖸 𝖷 𝖯𝖱𝖮</div>
+        <div class="box period-box" id="period">Loading Period...</div>
+        <div class="box result-box" id="result">Predicting...</div>
+        <div class="history-box" id="history">History:</div>
     </div>
 
     <script>
-        let lastPrediction = "PREDICTING...";
-        let predictionHistory = [];
+        let latestPeriod = null;
 
-        function getPrediction() {
-            let now = new Date();
-            let minutes = now.getUTCMinutes();
-            let seconds = now.getUTCSeconds();
-            let remainingSeconds = 60 - seconds;
+        // ✅ Fetch Current Game Period
+        async function fetchCurrentGameIssue() {
+            try {
+                const apiUrl = 'https://api.bdg88zf.com/api/webapi/GetGameIssue';
+                const requestData = {
+                    typeId: 1,
+                    language: 0,
+                    random: "40079dcba93a48769c6ee9d4d4fae23f",
+                    signature: "D12108C4F57C549D82B23A91E0FA20AE",
+                    timestamp: 1727792520,
+                };
 
-            let periodNumber = now.getUTCFullYear().toString() + 
-                               ('0' + (now.getUTCMonth() + 1)).slice(-2) + 
-                               ('0' + now.getUTCDate()).slice(-2) + 
-                               "1000" + (10001 + minutes);
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json;charset=UTF-8' },
+                    body: JSON.stringify(requestData),
+                });
 
-            document.getElementById("period").textContent = "PERIOD: " + periodNumber;
-            document.getElementById("timer").textContent = `00 : ${("0" + remainingSeconds).slice(-2)}`;
-
-            if (seconds === 0) {
-                let lastResults = ["BIG", "SMALL", "BIG", "BIG", "SMALL"];
-                let counts = { "BIG": 0, "SMALL": 0 };
-                lastResults.forEach(r => counts[r]++);
-
-                let prediction = (counts["BIG"] > counts["SMALL"]) ? "SMALL" : "BIG";
-                if (Math.random() < 0.3) {  
-                    prediction = prediction === "BIG" ? "SMALL" : "BIG";
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.code === 0) {
+                        const currentPeriod = data.data.issueNumber;
+                        if (currentPeriod !== latestPeriod) {
+                            latestPeriod = currentPeriod;
+                            document.getElementById('period').textContent = `Period: ${latestPeriod}`;
+                            updatePrediction();
+                        }
+                    }
                 }
-
-                lastPrediction = prediction;
-                let oppositeNumber = calculateOppositeNumber(prediction);
-
-                predictionHistory.unshift(`Period ${periodNumber}: ${lastPrediction} (${oppositeNumber})`);
-                if (predictionHistory.length > 5) {
-                    predictionHistory.pop();
-                }
-
-                document.getElementById("history").innerHTML = "HISTORY:<br>" + predictionHistory.join("<br>");
-                document.getElementById("result").textContent = "PREDICTION: " + lastPrediction;
-                document.getElementById("opposite-result").textContent = "OPPOSITE: " + oppositeNumber;
+            } catch (error) {
+                console.error('Error fetching period:', error);
             }
         }
 
-        function calculateOppositeNumber(prediction) {
-            let oppositeBase = prediction === "BIG" ? 50 : 5;
-            let randomOffset = Math.floor(Math.random() * 5) + 1;
-            return oppositeBase + randomOffset;
+        // ✅ Logic to determine Prediction and Opposite Number
+        function calculatePredictionAndOpposite(period) {
+            const lastDigit = parseInt(period.slice(-1));
+            const isSmall = lastDigit >= 4;
+            const prediction = isSmall ? "SMALL" : "BIG";
+            const oppositeNumber = isSmall
+                ? Math.floor(Math.random() * 4)
+                : Math.floor(Math.random() * 4) + 4;
+            return { prediction, oppositeNumber };
         }
 
-        setInterval(getPrediction, 1000);
+        // ✅ Update Prediction and History
+        function updatePrediction() {
+            const { prediction, oppositeNumber } = calculatePredictionAndOpposite(latestPeriod);
+            document.getElementById('result').textContent = `Prediction: ${prediction} (${oppositeNumber})`;
+            updateHistory(latestPeriod, prediction, oppositeNumber);
+        }
+
+        // ✅ Update History Section
+        function updateHistory(period, prediction, oppositeNumber) {
+            const historyBox = document.getElementById('history');
+            const historyEntry = document.createElement('div');
+            historyEntry.textContent = `Period: ${period} → ${prediction} (${oppositeNumber})`;
+            historyBox.insertBefore(historyEntry, historyBox.firstChild);
+            if (historyBox.children.length > 10) {
+                historyBox.removeChild(historyBox.lastChild);
+            }
+        }
+
+        // ✅ Initialize
+        fetchCurrentGameIssue();
+        setInterval(fetchCurrentGameIssue, 5000);
     </script>
+
 </body>
-  </html>
+
+</html>
