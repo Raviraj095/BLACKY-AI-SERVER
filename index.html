@@ -1,148 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>𝖡𝖫𝖠𝖢𝖪𝖸 𝖷 𝖯𝖱𝖮</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Typing & ListView</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: black;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
-            font-family: Arial, sans-serif;
-            flex-direction: column;
-            background: black;
-            color: white;
-            overflow: hidden;
         }
-
-        .container {
-            width: 90%;
-            max-width: 600px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.8);
+        .outer-container {
+            width: 95%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 12px;
+            position: relative;
+        }
+        .inner-container {
+            padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-        }
-
-        .title {
-            font-size: 28px;
-            font-weight: bold;
+            border: 4px solid #0099ff;
+            box-shadow: 0 0 20px #0099ff;
             text-align: center;
-            margin-bottom: 20px;
+            background-color: black;
+            color: white;
         }
-
-        .box {
-            padding: 15px;
-            margin: 10px 0;
+        .textview {
+            font-size: 24px;
+            margin: 15px 0;
+            padding: 12px;
             border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
             text-align: center;
-            font-size: 18px;
-            font-weight: bold;
         }
-
-        .period-box {
-            background: rgba(0, 128, 0, 0.5);
-        }
-
-        .result-box {
-            background: rgba(255, 0, 0, 0.5);
-        }
-
-        .history-box {
+        .listview {
             margin-top: 20px;
-            padding: 10px;
-            background: rgba(0, 0, 128, 0.5);
-            border-radius: 8px;
-            max-height: 150px;
+            padding: 15px;
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            text-align: center;
+            list-style: none;
+            max-height: 250px;
             overflow-y: auto;
+            box-shadow: 0 0 12px #0099ff;
+        }
+        .listview li {
+            padding: 10px;
+            margin: 6px;
+            background-color: rgba(0, 153, 255, 0.3);
+            border-radius: 6px;
         }
     </style>
 </head>
-
 <body>
-
-    <div class="container">
-        <div class="title">𝖡𝖫𝖠𝖢𝖪𝖸 𝖷 𝖯𝖱𝖮</div>
-        <div class="box period-box" id="period">Loading Period...</div>
-        <div class="box result-box" id="result">Predicting...</div>
-        <div class="history-box" id="history">History:</div>
+    <div class="outer-container">
+        <div class="inner-container">
+            <div id="textview1" class="textview">𝐁𝐋𝐀𝐂𝐊𝐘 𝐗 𝐏𝐑𝐄𝐃𝐈𝐂𝐓𝐎𝐑</div>
+            <div id="textview2" class="textview">Loading...</div>
+            <div id="textview3" class="textview">00:00</div>
+            <div id="textview4" class="textview">Predicted Trend: --</div>
+            <ul id="history" class="listview"></ul>
+        </div>
     </div>
-
     <script>
-        let latestPeriod = null;
+        const RESULTS = ["4", "1", "7", "3", "9", "2", "0", "8", "5", "6"];
+        let lastResults = [];
 
-        // ✅ Fetch Current Game Period
-        async function fetchCurrentGameIssue() {
-            try {
-                const apiUrl = 'https://api.bdg88zf.com/api/webapi/GetGameIssue';
-                const requestData = {
-                    typeId: 1,
-                    language: 0,
-                    random: "40079dcba93a48769c6ee9d4d4fae23f",
-                    signature: "D12108C4F57C549D82B23A91E0FA20AE",
-                    timestamp: 1727792520,
-                };
+        function getDeterministicResult(period) {
+            const hash = period.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            const resultValue = RESULTS[hash % RESULTS.length];
+            return resultValue;
+        }
 
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json;charset=UTF-8' },
-                    body: JSON.stringify(requestData),
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.code === 0) {
-                        const currentPeriod = data.data.issueNumber;
-                        if (currentPeriod !== latestPeriod) {
-                            latestPeriod = currentPeriod;
-                            document.getElementById('period').textContent = `Period: ${latestPeriod}`;
-                            updatePrediction();
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching period:', error);
+        function updateTimerAndPeriod() {
+            const now = new Date();
+            const seconds = now.getUTCSeconds();
+            const remainingSeconds = 60 - seconds;
+            const minutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+            const period = new Date().toISOString().slice(0, 10).replace(/-/g, '') + "1000" + (10001 + minutes);
+            document.getElementById("textview2").innerText = period;
+            document.getElementById("textview3").innerText = `   ${String(0).padStart(2, '0')}  :  ${String(remainingSeconds).padStart(2, '0')}`;
+            
+            if (lastPeriod !== period) {
+                lastPeriod = period;
+                updateResult(period);
             }
         }
 
-        // ✅ Logic to determine Prediction and Opposite Number
-        function calculatePredictionAndOpposite(period) {
-            const lastDigit = parseInt(period.slice(-1));
-            const isSmall = lastDigit >= 4;
-            const prediction = isSmall ? "SMALL" : "BIG";
-            const oppositeNumber = isSmall
-                ? Math.floor(Math.random() * 4)
-                : Math.floor(Math.random() * 4) + 4;
-            return { prediction, oppositeNumber };
-        }
+        let lastPeriod = "";
 
-        // ✅ Update Prediction and History
-        function updatePrediction() {
-            const { prediction, oppositeNumber } = calculatePredictionAndOpposite(latestPeriod);
-            document.getElementById('result').textContent = `Prediction: ${prediction} (${oppositeNumber})`;
-            updateHistory(latestPeriod, prediction, oppositeNumber);
-        }
+        function updateResult(period) {
+            const resultValue = getDeterministicResult(period);
+            const trend = resultValue <= 4 ? "𝐒𝐌𝐀𝐋𝐋" : "𝐁𝐈𝐆";
 
-        // ✅ Update History Section
-        function updateHistory(period, prediction, oppositeNumber) {
-            const historyBox = document.getElementById('history');
-            const historyEntry = document.createElement('div');
-            historyEntry.textContent = `Period: ${period} → ${prediction} (${oppositeNumber})`;
-            historyBox.insertBefore(historyEntry, historyBox.firstChild);
-            if (historyBox.children.length > 10) {
-                historyBox.removeChild(historyBox.lastChild);
+            document.getElementById("textview4").innerText = `𝐏𝐑𝐄𝐃𝐈𝐂𝐓𝐄𝐃 𝐓𝐑𝐄𝐍𝐃 : ${trend} (𝐑𝐄𝐒𝐔𝐋𝐓: ${resultValue})`;
+            
+            lastResults.push(resultValue);
+            if (lastResults.length > 10) {
+                lastResults.shift();
             }
+
+            const historyList = document.getElementById("history");
+            const listItem = document.createElement("li");
+            listItem.textContent = `${trend} (${resultValue})`;
+            historyList.prepend(listItem);
         }
 
-        // ✅ Initialize
-        fetchCurrentGameIssue();
-        setInterval(fetchCurrentGameIssue, 5000);
+        setInterval(updateTimerAndPeriod, 1000);
     </script>
-
 </body>
-
 </html>
